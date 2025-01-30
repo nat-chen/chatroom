@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { CreateFriendshipDto } from './dto/create-friendship.dto';
-import { UpdateFriendshipDto } from './dto/update-friendship.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { FriendAddDto } from './dto/friend-add.dto';
+import { Inject, Injectable } from "@nestjs/common";
+import { CreateFriendshipDto } from "./dto/create-friendship.dto";
+import { UpdateFriendshipDto } from "./dto/update-friendship.dto";
+import { PrismaService } from "src/prisma/prisma.service";
+import { FriendAddDto } from "./dto/friend-add.dto";
 
 @Injectable()
 export class FriendshipService {
@@ -20,23 +20,109 @@ export class FriendshipService {
     });
   }
 
-  create(createFriendshipDto: CreateFriendshipDto) {
-    return 'This action adds a new friendship';
+  async list(userId: number) {
+    return this.prismaService.friendRequest.findMany({
+      where: {
+        fromUserId: userId,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all friendship`;
+  async agree(friendId: number, userId: number) {
+    console.log(friendId, userId);
+    const res1 = await this.prismaService.friendRequest.updateMany({
+      where: {
+        fromUserId: userId,
+        toUserId: friendId,
+        status: 0,
+      },
+      data: {
+        status: 1,
+      },
+    });
+    console.log(res1);
+
+    const res = await this.prismaService.friendship.findMany({
+      where: {
+        userId,
+        friendId,
+      },
+    });
+
+    if (!res.length) {
+      await this.prismaService.friendship.create({
+        data: {
+          userId,
+          friendId,
+        },
+      });
+    }
+    return "添加成功";
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} friendship`;
+  async reject(friendId: number, userId: number) {
+    await this.prismaService.friendRequest.updateMany({
+      where: {
+        fromUserId: friendId,
+        toUserId: userId,
+        status: 0,
+      },
+      data: {
+        status: 2,
+      },
+    });
+    return "已拒绝";
   }
 
-  update(id: number, updateFriendshipDto: UpdateFriendshipDto) {
-    return `This action updates a #${id} friendship`;
+  async getFriendship(userId: number) {
+    const friends = await this.prismaService.friendship.findMany({
+      where: {
+        OR: [
+          {
+            userId: userId,
+          },
+          {
+            friendId: userId,
+          },
+        ],
+      },
+    });
+
+    const set = new Set<number>();
+    for (let i = 0; i < friends.length; i++) {
+      set.add(friends[i].userId);
+      set.add(friends[i].friendId);
+    }
+
+    const friendIds = [...set].filter((item) => item !== userId);
+
+    const res = [];
+
+    for (let i = 0; i < friendIds.length; i++) {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: friendIds[i],
+        },
+        select: {
+          id: true,
+          username: true,
+          nickName: true,
+          email: true,
+        },
+      });
+      res.push(user);
+    }
+
+    return res;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} friendship`;
+  async remove(friendId: number, userId: number) {
+    await this.prismaService.friendship.deleteMany({
+      where: {
+        userId,
+        friendId,
+      },
+    });
+    return "删除成功";
   }
 }

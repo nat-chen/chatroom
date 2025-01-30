@@ -4,13 +4,13 @@ import {
   Inject,
   Injectable,
   Logger,
-} from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { RedisService } from 'src/redis/redis.service';
-import { RegisterUserDto } from './dto/register-user.dto';
-import { LoginUserDto } from './dto/login-user.dto';
-import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+} from "@nestjs/common";
+import { PrismaService } from "src/prisma/prisma.service";
+import { RedisService } from "src/redis/redis.service";
+import { RegisterUserDto } from "./dto/register-user.dto";
+import { LoginUserDto } from "./dto/login-user.dto";
+import { UpdateUserPasswordDto } from "./dto/update-user-password.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UserService {
@@ -24,13 +24,14 @@ export class UserService {
 
   async register(user: RegisterUserDto) {
     const captcha = await this.redisService.get(`captcha_${user.email}`);
+    console.log(user.email);
 
     if (!captcha) {
-      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+      throw new HttpException("验证码已失效", HttpStatus.BAD_REQUEST);
     }
 
     if (user.captcha !== captcha) {
-      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+      throw new HttpException("验证码不正确", HttpStatus.BAD_REQUEST);
     }
 
     const foundUser = await this.prismaService.user.findUnique({
@@ -40,7 +41,7 @@ export class UserService {
     });
 
     if (foundUser) {
-      throw new HttpException('用户已存在', HttpStatus.BAD_REQUEST);
+      throw new HttpException("用户已存在", HttpStatus.BAD_REQUEST);
     }
 
     try {
@@ -74,11 +75,11 @@ export class UserService {
     });
 
     if (!foundUser) {
-      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+      throw new HttpException("用户不存在", HttpStatus.BAD_REQUEST);
     }
 
     if (foundUser.password !== loginUserDto.password) {
-      throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
+      throw new HttpException("密码错误", HttpStatus.BAD_REQUEST);
     }
 
     delete foundUser.password;
@@ -103,15 +104,15 @@ export class UserService {
   }
   async updatePassword(passwordDto: UpdateUserPasswordDto) {
     const captcha = await this.redisService.get(
-      `update_password_captcha_${passwordDto.email}`,
+      `update_password_captcha_${passwordDto.email}`
     );
 
     if (!captcha) {
-      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+      throw new HttpException("验证码已失效", HttpStatus.BAD_REQUEST);
     }
 
     if (passwordDto.captcha !== captcha) {
-      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+      throw new HttpException("验证码不正确", HttpStatus.BAD_REQUEST);
     }
 
     const foundUser = await this.prismaService.user.findUnique({
@@ -129,24 +130,24 @@ export class UserService {
         },
         data: foundUser,
       });
-      return '密码修改成功';
+      return "密码修改成功";
     } catch (e) {
       this.logger.error(e, UserService);
-      return '密码修改失败';
+      return "密码修改失败";
     }
   }
 
   async update(userId: number, updateUserDto: UpdateUserDto) {
     const captcha = await this.redisService.get(
-      `update_user_captcha_${updateUserDto.email}`,
+      `update_user_captcha_${updateUserDto.email}`
     );
 
     if (!captcha) {
-      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+      throw new HttpException("验证码已失效", HttpStatus.BAD_REQUEST);
     }
 
     if (updateUserDto.captcha !== captcha) {
-      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+      throw new HttpException("验证码不正确", HttpStatus.BAD_REQUEST);
     }
 
     const foundUser = await this.prismaService.user.findUnique({
@@ -169,52 +170,10 @@ export class UserService {
         },
         data: foundUser,
       });
-      return '用户信息修改成功';
+      return "用户信息修改成功";
     } catch (e) {
       this.logger.error(e, UserService);
-      return '用户信息修改成功';
+      return "用户信息修改成功";
     }
-  }
-
-  async getFriendship(userId: number) {
-    const friends = await this.prismaService.friendship.findMany({
-      where: {
-        OR: [
-          {
-            userId: userId,
-          },
-          {
-            friendId: userId,
-          },
-        ],
-      },
-    });
-
-    const set = new Set<number>();
-    for (let i = 0; i < friends.length; i++) {
-      set.add(friends[i].userId);
-      set.add(friends[i].friendId);
-    }
-
-    const friendIds = [...set].filter((item) => item !== userId);
-
-    const res = [];
-
-    for (let i = 0; i < friendIds.length; i++) {
-      const user = await this.prismaService.user.findUnique({
-        where: {
-          id: friendIds[i],
-        },
-        select: {
-          id: true,
-          username: true,
-          nickName: true,
-          email: true,
-        },
-      });
-      res.push(user);
-    }
-
-    return res;
   }
 }
