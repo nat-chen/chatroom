@@ -1,13 +1,14 @@
 import { Button, Form, Input, message } from "antd";
 import { useForm } from "antd/es/form/Form";
-import { useCallback, useEffect } from "react";
-import "./update_info.css";
+import { useEffect } from "react";
+import "./index.css";
 import { useNavigate } from "react-router-dom";
 import {
   getUserInfo,
   updateInfo,
   updateUserInfoCaptcha,
 } from "../../interfaces";
+import { HeadPicUpload } from "./HeadPicUpload";
 
 export interface UserInfo {
   headPic: string;
@@ -30,6 +31,14 @@ export function UpdateInfo() {
       const res = await updateInfo(values);
       if (res.status === 201 || res.status === 200) {
         message.success("用户信息更新成功");
+        const userInfo = localStorage.getItem("userInfo");
+        if (userInfo) {
+          const info = JSON.parse(userInfo);
+          info.headPic = values.headPic;
+          info.nickName = values.nickName;
+
+          localStorage.setItem("userInfo", JSON.stringify(info));
+        }
       }
     } catch (e: any) {
       message.error(e.response?.data?.message || "系统繁忙，请稍后再试");
@@ -78,8 +87,9 @@ export function UpdateInfo() {
           label="头像"
           name="headPic"
           rules={[{ required: true, message: "请输入头像!" }]}
+          shouldUpdate
         >
-          <Input />
+          <HeadPicUpload />
         </Form.Item>
 
         <Form.Item

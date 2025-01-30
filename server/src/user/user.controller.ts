@@ -15,6 +15,7 @@ import { LoginUserDto } from "./dto/login-user.dto";
 import { JwtService } from "@nestjs/jwt";
 import { RequireLogin, UserInfo } from "src/custom.decorator";
 import { UpdateUserPasswordDto } from "./dto/update-user-password.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Controller("user")
 export class UserController {
@@ -78,6 +79,15 @@ export class UserController {
     return "success";
   }
 
+  @Post("update")
+  @RequireLogin()
+  async update(
+    @UserInfo("userId") userId: number,
+    @Body() updateUserDto: UpdateUserDto
+  ) {
+    return await this.userService.update(userId, updateUserDto);
+  }
+
   @Get("update_password/captcha")
   async updatePasswordCaptcha(@Query("address") address: string) {
     if (!address) {
@@ -100,6 +110,7 @@ export class UserController {
   }
 
   @Get("update/captcha")
+  @RequireLogin()
   async updateCaptcha(@Query("address") address: string) {
     if (!address) {
       throw new BadRequestException("邮箱地址不能为空");

@@ -2,6 +2,7 @@ import axios from "axios";
 import { RegisterUser } from "../pages/Register";
 import { UpdatePassword } from "../pages/UpdatePassword";
 import { message } from "antd";
+import { UserInfo } from "../pages/UpdateInfo";
 
 const axiosInstance = axios.create({
   baseURL: "http://localhost:3005/",
@@ -81,6 +82,10 @@ export async function updateInfo(data: UserInfo) {
   return await axiosInstance.post("/user/update", data);
 }
 
-export async function updateUserInfoCaptcha() {
-  return await axiosInstance.get("/user/update/captcha");
+export async function updateUserInfoCaptcha(address: string) {
+  return await axiosInstance.get(`/user/update/captcha?address=${address}`);
+}
+
+export async function presignedUrl(fileName: string) {
+  return axiosInstance.get(`/minio/presignedUrl?name=${fileName}`);
 }

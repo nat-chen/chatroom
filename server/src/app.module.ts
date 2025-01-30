@@ -12,6 +12,7 @@ import { FriendshipModule } from "./friendship/friendship.module";
 import { PrismaService } from "./prisma/prisma.service";
 import { ChatroomModule } from "./chatroom/chatroom.module";
 import { ConfigModule } from "@nestjs/config";
+import { MinioModule } from './minio/minio.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ConfigModule } from "@nestjs/config";
     }),
     FriendshipModule,
     ChatroomModule,
+    MinioModule,
   ],
   controllers: [AppController],
   providers: [

@@ -12,8 +12,8 @@ export class EmailService {
       port: 587,
       secure: false,
       auth: {
-        user: this.configService.get<string>("email_user"),
-        pass: this.configService.get<string>("email_password"),
+        user: this.configService.get<string>("EMAIL_USER"),
+        pass: this.configService.get<string>("EMAIL_PASSWORD"),
       },
     });
   }
@@ -22,7 +22,7 @@ export class EmailService {
     await this.transporter.sendMail({
       from: {
         name: "聊天室",
-        address: this.configService.get("email_user"),
+        address: this.configService.get("EMAIL_USER"),
       },
       to,
       subject,
