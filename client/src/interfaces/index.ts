@@ -89,3 +89,27 @@ export async function updateUserInfoCaptcha(address: string) {
 export async function presignedUrl(fileName: string) {
   return axiosInstance.get(`/minio/presignedUrl?name=${fileName}`);
 }
+
+export async function friendshipList(name?: string) {
+  return axiosInstance.get(`/friendship/list?name=${name || ""}`);
+}
+
+export async function chatroomList(name: string) {
+  return axiosInstance.get(`/chatroom/list?name=${name}`);
+}
+
+export async function friendAdd(data: AddFriend) {
+  return axiosInstance.post("/friendship/add", data);
+}
+
+export async function friendRequestList() {
+  return axiosInstance.get("/friendship/request_list");
+}
+
+export async function agreeFriendRequest(id: number) {
+  return axiosInstance.get(`/friendship/agree/${id}`);
+}
+
+export async function rejectFriendRequest(id: number) {
+  return axiosInstance.get(`/friendship/reject/${id}`);
+}
