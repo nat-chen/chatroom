@@ -1,10 +1,13 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
-  Get,
-  Query,
+  Patch,
+  Param,
+  Delete,
   Inject,
+  Query,
   BadRequestException,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
@@ -19,6 +22,13 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Controller("user")
 export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Post("register")
+  async register(@Body() registerUser: RegisterUserDto) {
+    return await this.userService.register(registerUser);
+  }
+
   @Inject(EmailService)
   private emailService: EmailService;
 
@@ -28,15 +38,11 @@ export class UserController {
   @Inject(JwtService)
   private jwtService: JwtService;
 
-  constructor(private readonly userService: UserService) {}
-
-  @Post("register")
-  async register(@Body() registerUser: RegisterUserDto) {
-    return await this.userService.register(registerUser);
-  }
-
   @Get("register-captcha")
   async captcha(@Query("address") address: string) {
+    if (!address) {
+      throw new BadRequestException("邮箱地址不能为空");
+    }
     const code = Math.random().toString().slice(2, 8);
 
     await this.redisService.set(`captcha_${address}`, code, 5 * 60);
@@ -75,17 +81,7 @@ export class UserController {
 
   @Post("update_password")
   async updatePassword(@Body() passwordDto: UpdateUserPasswordDto) {
-    console.log(passwordDto);
-    return "success";
-  }
-
-  @Post("update")
-  @RequireLogin()
-  async update(
-    @UserInfo("userId") userId: number,
-    @Body() updateUserDto: UpdateUserDto
-  ) {
-    return await this.userService.update(userId, updateUserDto);
+    return this.userService.updatePassword(passwordDto);
   }
 
   @Get("update_password/captcha")
@@ -109,12 +105,21 @@ export class UserController {
     return "发送成功";
   }
 
+  @Post("update")
+  @RequireLogin()
+  async update(
+    @UserInfo("userId") userId: number,
+    @Body() updateUserDto: UpdateUserDto
+  ) {
+    return await this.userService.update(userId, updateUserDto);
+  }
+
   @Get("update/captcha")
   @RequireLogin()
-  async updateCaptcha(@Query("address") address: string) {
-    if (!address) {
-      throw new BadRequestException("邮箱地址不能为空");
-    }
+  async updateCaptcha(@UserInfo("userId") userId: number) {
+    const { email: address } =
+      await this.userService.findUserDetailById(userId);
+
     const code = Math.random().toString().slice(2, 8);
 
     await this.redisService.set(

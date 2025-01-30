@@ -19,7 +19,9 @@ const props: DraggerProps = {
   },
   async customRequest(options) {
     const { onSuccess, file, action } = options;
+
     const res = await axios.put(action, file);
+
     onSuccess!(res.data);
   },
   onChange(info) {

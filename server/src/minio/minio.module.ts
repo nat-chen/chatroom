@@ -1,5 +1,4 @@
 import { Global, Module } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { MinioController } from "./minio.controller";
 import * as Minio from "minio";
 
@@ -8,17 +7,16 @@ import * as Minio from "minio";
   providers: [
     {
       provide: "MINIO_CLIENT",
-      async useFactory(configService: ConfigService) {
+      async useFactory() {
         const client = new Minio.Client({
           endPoint: "localhost",
           port: 9000,
           useSSL: false,
-          accessKey: configService.get("MINIO_ACCESS_KEY"),
-          secretKey: configService.get("MINIO_SECRET_KEY"),
+          accessKey: "y0LcMu6oAUcfplnjHlZk",
+          secretKey: "vsmADRnxfYnFARrNwDQyaozsXTwMH6psDNljJGNu",
         });
         return client;
       },
-      inject: [ConfigService],
     },
   ],
   exports: ["MINIO_CLIENT"],

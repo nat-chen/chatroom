@@ -1,10 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
@@ -17,18 +11,19 @@ interface JwtUserData {
 
 declare module 'express' {
   interface Request {
-    user: JwtUserData;
+    user: JwtUserData
   }
 }
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  
   @Inject()
   private reflector: Reflector;
 
   @Inject(JwtService)
   private jwtService: JwtService;
-
+  
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
@@ -37,43 +32,37 @@ export class AuthGuard implements CanActivate {
 
     const requireLogin = this.reflector.getAllAndOverride('require-login', [
       context.getClass(),
-      context.getHandler(),
+      context.getHandler()
     ]);
 
-    if (!requireLogin) {
+    if(!requireLogin) {
       return true;
     }
 
     const authorization = request.headers.authorization;
 
-    if (!authorization) {
+    if(!authorization) {
       throw new UnauthorizedException('用户未登录');
     }
 
-    try {
+    try{
       const token = authorization.split(' ')[1];
       const data = this.jwtService.verify<JwtUserData>(token);
 
       request.user = {
         userId: data.userId,
         username: data.username,
-      };
+      }
 
-      // response.header(
-      //   'token',
-      //   this.jwtService.sign(
-      //     {
-      //       userId: data.userId,
-      //       username: data.username,
-      //     },
-      //     {
-      //       expiresIn: '7d',
-      //     },
-      //   ),
-      // );
+      response.header('token', this.jwtService.sign({
+        userId: data.userId,
+        username: data.username
+      }, {
+        expiresIn: '7d'
+      }))
 
       return true;
-    } catch (e) {
+    } catch(e) {
       console.log(e);
       throw new UnauthorizedException('token 失效，请重新登录');
     }
